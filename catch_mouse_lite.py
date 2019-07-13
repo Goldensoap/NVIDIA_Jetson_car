@@ -1,5 +1,6 @@
 import cv2
 import multiprocessing as mp
+from copy import deepcopy
 import numpy
 import time 
 
@@ -11,27 +12,27 @@ def object_detection(e,d):
     #帧计数
     counter = 0
 
-    es = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 4))
+    #es = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 4))
     background = None
 
     #阻塞等待视频流
     e.wait()
 
-    #创建窗口
-    cv2.namedWindow('contours',0)
-    cv2.resizeWindow('contours',640,360)
-    cv2.namedWindow('gary',0)
-    cv2.namedWindow('dis',0)
-
     # 设置保存名称和编码格式
     fourcc = cv2.VideoWriter_fourcc('M','J','P','G')
     output = cv2.VideoWriter('{}.avi'.format(now),fourcc,d['fps'],d['size'])
+    print('创建文件{}.avi'.format(now))
+
+    print('开始处理')
+    start = time.time()
 
     while True:
 
         # 读取视频流
-        frame_lwpCV = d['image']
-            
+        if d['image'] is None:
+            continue
+        frame_lwpCV = deepcopy(d['image'])
+
         # 对帧进行预处理，先转灰度图，再进行高斯滤波。
         # 用高斯滤波进行模糊处理，进行处理的原因：每个输入的视频都会因自然震动、光照变化或者摄像头本身等原因而产生噪声。对噪声进行平滑是为了避免在运动和跟踪时将其检测出来。
         gray_lwpCV = cv2.cvtColor(frame_lwpCV, cv2.COLOR_BGR2GRAY)
@@ -39,7 +40,7 @@ def object_detection(e,d):
 
         # 将第一帧设置为整个输入的背景
         if background is None:
-            background = gray_lwpCV
+            background = deepcopy(gray_lwpCV)
             continue
 
         # 对于每个从背景之后读取的帧都会计算其与背景之间的差异，并得到一个差分图（different map）。
@@ -50,7 +51,7 @@ def object_detection(e,d):
         diff = cv2.threshold(diff, 10, 255, cv2.THRESH_BINARY)[1] 
 
         # 形态学膨胀
-        diff = cv2.dilate(diff, es, iterations=2) 
+        #diff = cv2.dilate(diff, es, iterations=2) 
 
         # 显示矩形框
         # 该函数计算一幅图像中目标的轮廓
@@ -72,30 +73,23 @@ def object_detection(e,d):
 
         # 更新背景
         counter +=1
-        if counter == 150:
-            counter = 0
-            background = gray_lwpCV
-        
-        # 显示结果图像
-        cv2.imshow('contours', frame_lwpCV)
-        cv2.imshow('gary', gray_lwpCV)
-        cv2.imshow('dis', diff)
+        if counter % 150 ==0:
+            background = deepcopy(gray_lwpCV)
 
         #按'q'健退出循环
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'):
-            d['status'] = False
+        if d['status'] == False:   
             break
 
+    stop = time.time()
+    print('总计处理{}帧，平均处理时间{:.2f}毫秒/帧，平均处理帧率{:.2f}'.format(counter,((stop-start)/counter)*1000,counter/(stop-start)))
     #处理完毕，释放所有资源
     output.release()
-    cv2.destroyAllWindows()
-    print('完成录像，释放资源')
+    print('完成录像')
 
 
 def get_video(e,d):
     # 获取网络摄像头
-    camera = cv2.VideoCapture('tcp://192.168.2.127:8090')
+    camera = cv2.VideoCapture('tcp://:8090')
     # 测试用,查看视频size,fps
     size = (int(camera.get(cv2.CAP_PROP_FRAME_WIDTH)),
             int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT)))
@@ -105,11 +99,15 @@ def get_video(e,d):
 
     d['size'] = size
     d['fps'] = fps
+
+    counter = 0
+    start = time.time()
     # 判断视频是否打开
     while camera.isOpened():
 
         # 读取视频流
         ret, frame_lwpCV = camera.read()
+        counter +=1
         if ret == True:
             d['image'] = frame_lwpCV
 
@@ -123,6 +121,16 @@ def get_video(e,d):
             break
 
     camera.release()
+    stop = time.time()
+    print('捕捉图像子进程结束共计{}帧'.format(counter))
+    print('平均捕获时间{:.2f}毫秒/帧,平均捕获帧率{:.2f}'.format(((stop-start)/counter)*1000,counter/(stop-start)))
+
+
+def get_input(d):
+    while True:
+        if input() == 'q':
+            d['status'] = False
+            break
 
 if __name__ == '__main__':
     print("目标检测启动,按q 结束程序")
@@ -135,7 +143,12 @@ if __name__ == '__main__':
         get_image.start()
         print('视频捕获进程启动')
 
-        object_detection(e,d)
+        ob = mp.Process(target = object_detection,args = (e,d))
+        ob.start()
+        print('处理进程启动')
+
+        get_input(d)
 
         get_image.join()
+        ob.join()
         print('程序结束')
