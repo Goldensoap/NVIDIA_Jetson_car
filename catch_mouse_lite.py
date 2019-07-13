@@ -20,7 +20,7 @@ def object_detection(e,d):
 
     # 设置保存名称和编码格式
     fourcc = cv2.VideoWriter_fourcc('M','J','P','G')
-    output = cv2.VideoWriter('{}.avi'.format(now),fourcc,d['fps'],d['size'])
+    output = cv2.VideoWriter('{}.avi'.format(now),fourcc,10,d['size'])
     print('创建文件{}.avi'.format(now))
 
     print('开始处理')
