@@ -60,7 +60,7 @@ def object_detection(e,d):
         for c in contours:
 
             # 对于矩形区域，只显示给定阈值的轮廓，所以一些微小的变化和背景变化不会显示。对于光照不变和噪声低的摄像头可不设定轮廓最小尺寸的阈值
-            if cv2.contourArea(c) < 200 or cv2.contourArea(c) > 600000: 
+            if cv2.contourArea(c) < 200 or cv2.contourArea(c) > 200000: 
                 continue
 
             # 该函数计算矩形的边界框
