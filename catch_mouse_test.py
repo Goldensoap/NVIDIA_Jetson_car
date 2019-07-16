@@ -54,7 +54,7 @@ def object_detection(e,d):
 
         # 显示矩形框
         # 该函数计算一幅图像中目标的轮廓
-        _, contours, _ = cv2.findContours(diff, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) 
+        contours, _ = cv2.findContours(diff, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) 
         Flag = False
         for c in contours:
 
