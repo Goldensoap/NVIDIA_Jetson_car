@@ -10,7 +10,7 @@ import time
 import Adafruit_PCA9685
 import threading
 import queue
-import os
+import subprocess
 from getch import _Getch
 # Uncomment to enable debug output.
 #import logging
@@ -59,10 +59,6 @@ class Attitude_control(threading.Thread):
         pulse /= pulse_length
         self.pwm.set_pwm(channel, 0, int(pulse))
 
-def start_push_video():
-    print("打开视频端口")
-    os.system("raspivid -t 0 -w 640 -h 480 -fps 25 -o - | nc -l 8090")
-
 
 def main():
     print("鹰眼...启动")
@@ -75,10 +71,8 @@ def main():
     thread_1.daemon = True
     thread_1.start()
 
-    thread_2 = threading.Thread(target=start_push_video)
-    thread_2.name = '视频端口准备线程'
-    thread_2.daemon = True
-    thread_2.start()
+    camera = subprocess.Popen(['raspivid -t 0 -w 640 -h 480 -fps 25 -o - | nc -l 8090'], shell=True)
+    shellpid = camera.pid+2
 
     getch = _Getch()
     while True:
@@ -89,28 +83,22 @@ def main():
             Next = getch()
             try:
                 if Next == 'A':
-                    qe.put_nowait("up")
-                elif Next == 'B':
                     qe.put_nowait("down")
+                elif Next == 'B':
+                    qe.put_nowait("up")
                 elif Next == 'D':
                     qe.put_nowait("left")
                 elif Next == 'C':
                     qe.put_nowait("right")
             except queue.Full:
                 pass
-
-        elif ch == bytes('r','ascii'):
-            if thread_2.isAlive() == True:
-                print("视频端口已开启，无需重置")
-            else:
-                print("尝试重启视频端口")
-                thread_2 = threading.Thread(target=start_push_video)
-                thread_2.name = '视频端口准备线程'
-                thread_2.daemon = True
-                thread_2.start()
-                if thread_2.isAlive() == True:
-                    print("视频端口重启成功，请查看")
-
+        elif ch == 'r':
+            if camera.poll() == None:
+                camera = subprocess.Popen(['raspivid -t 0 -w 640 -h 480 -fps 25 -o - | nc -l 8090 '], shell=True)
+                shellpid = camera.pid+2
+                print("重启视频流")
+    subprocess.run(['kill',f'{shellpid}'])
+    camera.kill()
     print("主线程结束")
 if __name__ == "__main__":
     main()

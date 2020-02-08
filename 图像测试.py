@@ -5,8 +5,8 @@ if __name__ == '__main__':
 
     cv2.namedWindow('contours',0)
 
-    camera = cv2.VideoCapture('tcp://192.168.2.127:8090')
-    # 测试用,查看视频size,fps
+    camera = cv2.VideoCapture('tcp://192.168.2.237:8090')
+    # 测试用,查看视频尺寸,帧率
     size = (int(camera.get(cv2.CAP_PROP_FRAME_WIDTH)),
             int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT)))
     fps = int(camera.get(cv2.CAP_PROP_FPS))
