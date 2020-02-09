@@ -95,7 +95,7 @@ def object_detection(e,d):
 
 def get_video(e,d):
     # 获取网络摄像头
-    camera = cv2.VideoCapture('tcp://192.168.2.127:8090')
+    camera = cv2.VideoCapture('tcp://192.168.2.237:8090')
     # 测试用,查看视频size,fps
     size = (int(camera.get(cv2.CAP_PROP_FRAME_WIDTH)),
             int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT)))

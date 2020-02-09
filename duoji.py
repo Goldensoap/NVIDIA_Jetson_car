@@ -11,6 +11,7 @@ import Adafruit_PCA9685
 import threading
 import queue
 import subprocess
+import psutil
 from getch import _Getch
 # Uncomment to enable debug output.
 #import logging
@@ -59,6 +60,13 @@ class Attitude_control(threading.Thread):
         pulse /= pulse_length
         self.pwm.set_pwm(channel, 0, int(pulse))
 
+def 查找列表元素(列表:list,元素)->bool:
+    try:
+        列表.index(元素)
+        return True
+    except ValueError:
+        return False
+
 
 def main():
     print("鹰眼...启动")
@@ -73,6 +81,7 @@ def main():
 
     camera = subprocess.Popen(['raspivid -t 0 -w 640 -h 480 -fps 25 -o - | nc -l 8090'], shell=True)
     shellpid = camera.pid+2
+    print(f"推流管道进程{shellpid}")
 
     getch = _Getch()
     while True:
@@ -93,11 +102,14 @@ def main():
             except queue.Full:
                 pass
         elif ch == 'r':
-            if camera.poll() == None:
+            if camera.poll() != None: #推流子进程没在运行
                 camera = subprocess.Popen(['raspivid -t 0 -w 640 -h 480 -fps 25 -o - | nc -l 8090 '], shell=True)
                 shellpid = camera.pid+2
                 print("重启视频流")
-    subprocess.run(['kill',f'{shellpid}'])
+    
+    if  查找列表元素(psutil.pids(),shellpid) and psutil.Process(shellpid).name() == "nc":
+        subprocess.run(['kill',f'{shellpid}'])
+        print("推流子进程结束")
     camera.kill()
     print("主线程结束")
 if __name__ == "__main__":
