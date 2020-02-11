@@ -79,6 +79,8 @@ def object_detection(e,d):
         #按'q'健退出循环
         if d['status'] == False:   
             break
+        e.clear()
+        e.wait()
 
     stop = time.time()
     print('总计处理{}帧，平均处理时间{:.2f}毫秒/帧，平均处理帧率{:.2f}'.format(counter,((stop-start)/counter)*1000,counter/(stop-start)))
@@ -107,9 +109,9 @@ def get_video(e,d):
 
         # 读取视频流
         ret, frame_lwpCV = camera.read()
-        counter +=1
         if ret == True:
             d['image'] = frame_lwpCV
+            counter += 1
 
         # 停止主进程阻塞
         if e.is_set():

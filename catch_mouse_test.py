@@ -26,9 +26,11 @@ def object_detection(e,d):
     # 设置保存名称和编码格式
     fourcc = cv2.VideoWriter_fourcc('M','J','P','G')
     output = cv2.VideoWriter('{}.avi'.format(now),fourcc,d['fps'],d['size'])
+    print('创建文件{}.avi'.format(now))
 
+    print('开始处理')
+    start = time.time()
     while True:
-
         # 读取视频流
         frame_lwpCV = d['image']
             
@@ -59,7 +61,7 @@ def object_detection(e,d):
         for c in contours:
 
             # 对于矩形区域，只显示给定阈值的轮廓，所以一些微小的变化和背景变化不会显示。对于光照不变和噪声低的摄像头可不设定轮廓最小尺寸的阈值
-            if cv2.contourArea(c) < 200 or cv2.contourArea(c) > 600000: 
+            if cv2.contourArea(c) < 500 or cv2.contourArea(c) > 600000: 
                 continue
 
             # 该函数计算矩形的边界框
@@ -72,8 +74,7 @@ def object_detection(e,d):
 
         # 更新背景
         counter +=1
-        if counter == 150:
-            counter = 0
+        if counter % 150 == 0:
             background = gray_lwpCV
         
         # 显示结果图像
@@ -87,6 +88,10 @@ def object_detection(e,d):
             d['status'] = False
             break
 
+        e.clear()
+        e.wait()
+    stop = time.time()
+    print('总计处理{}帧，平均处理时间{:.2f}毫秒/帧，平均处理帧率{:.2f}'.format(counter,((stop-start)/counter)*1000,counter/(stop-start)))
     #处理完毕，释放所有资源
     output.release()
     cv2.destroyAllWindows()
@@ -105,6 +110,9 @@ def get_video(e,d):
 
     d['size'] = size
     d['fps'] = fps
+
+    counter = 0
+    start = time.time()
     # 判断视频是否打开
     while camera.isOpened():
 
@@ -112,17 +120,17 @@ def get_video(e,d):
         ret, frame_lwpCV = camera.read()
         if ret == True:
             d['image'] = frame_lwpCV
-
-        # 停止主进程阻塞
-        if e.is_set():
-            pass
-        else:
+            counter += 1
+            # 停止主进程阻塞
             e.set()
 
         if d['status'] == False:
             break
-
+    e.set()
     camera.release()
+    stop = time.time()
+    print('捕捉图像子进程结束共计{}帧'.format(counter))
+    print('平均捕获时间{:.2f}毫秒/帧,平均捕获帧率{:.2f}'.format(((stop-start)/counter)*1000,counter/(stop-start)))
 
 if __name__ == '__main__':
     print("目标检测启动,按q 结束程序")
