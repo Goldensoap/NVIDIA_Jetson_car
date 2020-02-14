@@ -11,10 +11,7 @@ def object_detection(e,d):
 
     #帧计数
     counter = 0
-
-    #es = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 4))
-    background = None
-
+    bs=cv2.createBackgroundSubtractorKNN(detectShadows=True)
     #阻塞等待视频流
     e.wait()
 
@@ -27,53 +24,31 @@ def object_detection(e,d):
     start = time.time()
 
     while True:
+        e.clear()
+        e.wait()
         # 读取视频流
         if d['image'] is None:
             continue
+        # 读取视频流
         frame_lwpCV = deepcopy(d['image'])
-
-        # 对帧进行预处理，先转灰度图，再进行高斯滤波。
-        # 用高斯滤波进行模糊处理，进行处理的原因：每个输入的视频都会因自然震动、光照变化或者摄像头本身等原因而产生噪声。对噪声进行平滑是为了避免在运动和跟踪时将其检测出来。
-        gray_lwpCV = cv2.cvtColor(frame_lwpCV, cv2.COLOR_BGR2GRAY)
-        gray_lwpCV = cv2.GaussianBlur(gray_lwpCV, (7, 7), 0)
-
-        # 将第一帧设置为整个输入的背景
-        if background is None:
-            background = deepcopy(gray_lwpCV)
-            continue
-
-        # 对于每个从背景之后读取的帧都会计算其与背景之间的差异，并得到一个差分图（different map）。
-        # 还需要应用阈值来得到一幅黑白图像，并通过下面代码来膨胀（dilate）图像，从而对孔（hole）和缺陷（imperfection）进行归一化处理
-        diff = cv2.absdiff(background, gray_lwpCV)
-
-        # 二值化阈值处理
-        diff = cv2.threshold(diff, 10, 255, cv2.THRESH_BINARY)[1] 
-
-        # 形态学膨胀
-        #diff = cv2.dilate(diff, es, iterations=2) 
-
-        # 显示矩形框
-        # 该函数计算一幅图像中目标的轮廓
-        _,contours, _ = cv2.findContours(diff, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) 
-        Flag = False
-        for c in contours:
-
-            # 对于矩形区域，只显示给定阈值的轮廓，所以一些微小的变化和背景变化不会显示。对于光照不变和噪声低的摄像头可不设定轮廓最小尺寸的阈值
-            if cv2.contourArea(c) < 500 or cv2.contourArea(c) > 200000: 
-                continue
-
-            # 该函数计算矩形的边界框
-            Flag = True
-            (x, y, w, h) = cv2.boundingRect(c) 
-            cv2.rectangle(frame_lwpCV, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        fgmask=bs.apply(frame_lwpCV)
+        th=cv2.threshold(fgmask.copy(),244,255,cv2.THRESH_BINARY)[1]
+        th=cv2.erode(th,cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)),iterations=2)
         
-        if len(contours) > 0 and Flag == True:
+        dilated=cv2.dilate(th,cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)),iterations=2)
+        
+        _,contours,_=cv2.findContours(dilated,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        是否录制 = False
+        for c in contours:
+            if cv2.contourArea(c)>500:
+                (x,y,w,h)=cv2.boundingRect(c)
+                cv2.rectangle(frame_lwpCV,(x,y),(x+w,y+h),(255,255,0),2)
+                是否录制 = True
+        
+        if len(contours) > 0 and 是否录制 == True:
             output.write(frame_lwpCV)
-
-        # 更新背景
+        
         counter +=1
-        if counter % 150 ==0:
-            background = deepcopy(gray_lwpCV)
 
         #按'q'健退出循环
         if d['status'] == False:   

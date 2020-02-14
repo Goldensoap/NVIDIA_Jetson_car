@@ -54,7 +54,8 @@ def object_detection(e,d):
             break
 
         帧计数 += 1
-
+        e.clear()
+        e.wait()
     计时终点 = time.time()
     print('总计处理{}帧，平均处理时间{:.2f}毫秒/帧，平均处理帧率{:.2f}'.format(帧计数,((计时终点-计时起点)/帧计数)*1000,帧计数/(计时终点-计时起点)))
     #处理完毕，释放所有资源
@@ -88,18 +89,13 @@ def get_video(e,d):
         if ret == True:
             d['image'] = frame_lwpCV
             帧计数 += 1
-
-        # 停止主进程阻塞
-        if e.is_set():
-            pass
-        else:
             e.set()
 
         if d['status'] == False:
             break
 
     camera.release()
-
+    e.set()
     计时终点 = time.time()
     print('捕捉图像子进程结束共计{}帧'.format(帧计数))
     print('平均捕获时间{:.2f}毫秒/帧,平均捕获帧率{:.2f}'.format(((计时终点-计时起点)/帧计数)*1000,帧计数/(计时终点-计时起点)))
