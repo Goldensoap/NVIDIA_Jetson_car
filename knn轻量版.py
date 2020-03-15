@@ -24,8 +24,6 @@ def object_detection(e,d):
     start = time.time()
 
     while True:
-        e.clear()
-        e.wait()
         # 读取视频流
         if d['image'] is None:
             continue
@@ -40,7 +38,7 @@ def object_detection(e,d):
         _,contours,_=cv2.findContours(dilated,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
         是否录制 = False
         for c in contours:
-            if cv2.contourArea(c)>500:
+            if cv2.contourArea(c)>300:
                 (x,y,w,h)=cv2.boundingRect(c)
                 cv2.rectangle(frame_lwpCV,(x,y),(x+w,y+h),(255,255,0),2)
                 是否录制 = True
@@ -87,7 +85,7 @@ def get_video(e,d):
             counter += 1
             e.set()
 
-        if (counter/1500) == 1:
+        if (counter/1500) == 540:
             d['status'] = False
             break
 
