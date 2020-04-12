@@ -1,4 +1,4 @@
-#!/home/ros/.pyenv/shims/python3
+#!/home/jetbot/.pyenv/shims/python3
 # -*- coding: utf-8 -*-
 
 import rospy
@@ -31,7 +31,7 @@ class 图像处理:
         th=cv2.threshold(fgmask.copy(),244,255,cv2.THRESH_BINARY)[1]
         th=cv2.erode(th,cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)),iterations=2)
         dilated=cv2.dilate(th,cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)),iterations=2)
-        contours,_=cv2.findContours(dilated,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        _,contours,_=cv2.findContours(dilated,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 
         是否录制 = False
         for c in contours:
@@ -48,15 +48,16 @@ class 图像处理:
 
         try:
             self.帧处理结果.publish(self.帧转换器.cv2_to_imgmsg(cv帧, "bgr8"))
+            #rospy.loginfo("处理完一帧")
         except CvBridgeError as e:
             print(e)
 
 def 图像处理节点():
 	# ROS节点初始化
+    rospy.init_node('cv', anonymous=True)
     rospy.loginfo("开始处理图像")
     处理实例 = 图像处理()
-    rospy.init_node('cv', anonymous=True)
-
+    
     try:
         # 循环等待回调函数
         rospy.spin()

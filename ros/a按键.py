@@ -31,9 +31,14 @@ def 发布指令():
             数据.data = "右"
             指令发送.publish(数据)
             rospy.loginfo(f"发送指令:{数据.data}")
-
+        elif 输入 == 'q':
+            rospy.loginfo(f"退出节点")
+            break
         循环频率.sleep()
 
 if __name__ == '__main__':
 
-    发布指令()
+    try:
+        发布指令()
+    except KeyboardInterrupt:
+        rospy.loginfo(f"退出节点")
