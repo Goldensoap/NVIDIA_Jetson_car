@@ -15,7 +15,6 @@
   <!-- 舵机控制节点 -->
   <node pkg="cm" type="duoji.py" name="duoji" output="screen" />
   <!-- 图像处理节点（分布式节点） 
-  <node pkg="uvc_camera" type="uvc_camera_node" output="screen">
-  </node>-->
+  <node pkg="uvc_camera" type="uvc_camera_node" output="screen" /> -->
 
 </launch>

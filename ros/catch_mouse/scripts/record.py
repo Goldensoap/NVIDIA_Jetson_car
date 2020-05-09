@@ -1,4 +1,4 @@
-#!/home/ros/.pyenv/shims/python3
+#!/home/jetbot/.pyenv/shims/python3
 # -*- coding: utf-8 -*-
 
 import rospy

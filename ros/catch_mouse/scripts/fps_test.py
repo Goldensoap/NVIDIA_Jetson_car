@@ -1,4 +1,4 @@
-#!/home/pi/.pyenv/shims/python3
+#!/home/jetbot/.pyenv/shims/python3
 
 import rospy
 #import cv2

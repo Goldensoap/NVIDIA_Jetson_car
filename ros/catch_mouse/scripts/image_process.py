@@ -14,7 +14,7 @@ class 图像处理:
         
         self.帧转换器 = CvBridge()
         # 创建一个Subscriber，订阅名为/usb_cam/image_raw的话题，注册回调函数poseCallback
-        self.图像接收 = rospy.Subscriber("/usb_cam/image_raw", Image, self.帧处理)
+        self.图像接收 = rospy.Subscriber("/image_raw/decompressed", Image, self.帧处理)
         # 创建一个发布者，发布图像处理结果和选定录制的帧
         self.帧处理结果 = rospy.Publisher("/catch_mouse_processed/image_raw",Image,queue_size=10)
         self.帧录制 = rospy.Publisher("/catch_mouse_result/image_raw",Image,queue_size=10)
